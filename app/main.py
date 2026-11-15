@@ -26,6 +26,8 @@ from app.auth import (
     get_current_user,
     is_authenticated,
     COOKIE_NAME,
+    login_rate_limiter,
+    get_client_ip,
 )
 from app.skills import catalog
 from app.resumes_data import (
@@ -66,13 +68,106 @@ app = FastAPI(
     version="1.1.0",
 )
 
+# Security Headers & CORS Configuration
+SECURITY_HEADERS = {
+    "X-Content-Type-Options": "nosniff",
+    "X-Frame-Options": "DENY",
+    "X-XSS-Protection": "1; mode=block",
+    "Referrer-Policy": "strict-origin-when-cross-origin",
+    "Permissions-Policy": "camera=(), microphone=(), geolocation=(), payment=()",
+    "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
+    "Content-Security-Policy": (
+        "default-src 'self' https: data:; "
+        "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.tailwindcss.com https://cdnjs.cloudflare.com; "
+        "style-src 'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com; "
+        "font-src 'self' https://cdnjs.cloudflare.com https://fonts.gstatic.com data:; "
+        "img-src 'self' data: https:; "
+        "connect-src 'self' https://ashish-ranjan.cloud;"
+    ),
+}
+
+PUBLIC_PATHS = {
+    "/login",
+    "/interview/login",
+    "/api/auth/login",
+    "/interview/api/auth/login",
+    "/api/auth/logout",
+    "/interview/api/auth/logout",
+    "/api/auth/verify",
+    "/interview/api/auth/verify",
+    "/favicon.ico",
+    "/interview/favicon.ico",
+}
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=[
+        "https://ashish-ranjan.cloud",
+        "https://www.ashish-ranjan.cloud",
+        "http://127.0.0.1:8060",
+        "http://localhost:8060",
+        "http://testserver",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+@app.middleware("http")
+async def security_and_auth_middleware(request: Request, call_next):
+    # Allow CORS preflight requests without authentication check
+    if request.method == "OPTIONS":
+        response = await call_next(request)
+        for h, v in SECURITY_HEADERS.items():
+            response.headers[h] = v
+        return response
+
+    raw_path = request.url.path
+    norm_path = raw_path.rstrip("/") if raw_path != "/" else "/"
+
+    # Allow public allowlist paths
+    if norm_path in PUBLIC_PATHS:
+        response = await call_next(request)
+        for h, v in SECURITY_HEADERS.items():
+            response.headers[h] = v
+        return response
+
+    # Check authentication status
+    authenticated = is_authenticated(request)
+    if not authenticated:
+        accept_header = request.headers.get("accept", "").lower()
+        is_api = (
+            raw_path.startswith("/api/")
+            or raw_path.startswith(f"{BASE_PATH}/api/")
+            or "application/json" in accept_header
+        )
+        if is_api:
+            resp = JSONResponse(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                content={
+                    "detail": "Unauthorized. High-security access required. Please authenticate.",
+                    "authenticated": False,
+                },
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+            for h, v in SECURITY_HEADERS.items():
+                resp.headers[h] = v
+            return resp
+        else:
+            resp = RedirectResponse(
+                url=f"{BASE_PATH}/login",
+                status_code=status.HTTP_302_FOUND,
+            )
+            for h, v in SECURITY_HEADERS.items():
+                resp.headers[h] = v
+            return resp
+
+    # Authenticated: proceed to route handler and attach security headers
+    response = await call_next(request)
+    for h, v in SECURITY_HEADERS.items():
+        response.headers[h] = v
+    return response
 
 # Request Models
 class LoginRequest(BaseModel):
@@ -170,21 +265,46 @@ router = APIRouter()
 # --- Auth Endpoints ---
 
 @router.post("/api/auth/login")
-async def login(req: LoginRequest, response: Response):
+async def login(req: LoginRequest, request: Request, response: Response):
+    client_ip = get_client_ip(request)
+
+    # 1. Check brute force lockout
+    is_locked, retry_after = login_rate_limiter.is_locked(client_ip)
+    if is_locked:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Too many failed login attempts. IP temporarily locked. Try again in {retry_after} seconds.",
+            headers={"Retry-After": str(retry_after)},
+        )
+
+    # 2. Timing-safe password check
     if not verify_password(req.password):
+        locked_now, lockout_duration = login_rate_limiter.record_failure(client_ip)
+        if locked_now:
+            raise HTTPException(
+                status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                detail=f"Too many failed login attempts. IP locked for {lockout_duration} seconds.",
+                headers={"Retry-After": str(lockout_duration)},
+            )
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Incorrect password. Access denied.",
         )
+
+    # 3. Successful login - clear rate limit records
+    login_rate_limiter.record_success(client_ip)
+
     token = create_access_token({"sub": "ashish", "role": "owner"})
-    response.set_cookie(
-        key=COOKIE_NAME,
-        value=token,
-        max_age=30 * 24 * 3600,
-        httponly=True,
-        samesite="lax",
-        path="/",
-    )
+    for cookie_path in ["/interview", "/"]:
+        response.set_cookie(
+            key=COOKIE_NAME,
+            value=token,
+            max_age=30 * 24 * 3600,
+            httponly=True,
+            secure=True,
+            samesite="strict",
+            path=cookie_path,
+        )
     return {"success": True, "token": token, "message": "Authentication successful"}
 
 

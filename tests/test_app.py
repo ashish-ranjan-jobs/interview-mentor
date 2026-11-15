@@ -1,12 +1,28 @@
 import pytest
 from fastapi.testclient import TestClient
 from app.main import app
-from app.auth import verify_password, create_access_token, verify_token
+from app.auth import (
+    verify_password,
+    create_access_token,
+    verify_token,
+    login_rate_limiter,
+    COOKIE_NAME,
+    JWT_ISSUER,
+    JWT_AUDIENCE,
+)
 from app.skills import catalog
 from app.gemini import validate_gemini_key
 from app.config import INTERVIEW_PASSWORD, INTERVIEW_ALT_PASSWORD
 
 client = TestClient(app)
+
+
+@pytest.fixture(autouse=True)
+def clean_rate_limits():
+    """Ensure rate limiter is reset before each test."""
+    login_rate_limiter.reset()
+    yield
+    login_rate_limiter.reset()
 
 
 def test_password_verification():
@@ -15,6 +31,8 @@ def test_password_verification():
         assert verify_password(INTERVIEW_ALT_PASSWORD) is True
     assert verify_password("WrongPassword123") is False
     assert verify_password("") is False
+    assert verify_password(None) is False
+    assert verify_password("   ") is False
 
 
 def test_token_creation_and_validation():
@@ -23,11 +41,54 @@ def test_token_creation_and_validation():
     assert payload is not None
     assert payload["sub"] == "ashish"
     assert payload["role"] == "owner"
+    assert payload["iss"] == JWT_ISSUER
+    assert payload["aud"] == JWT_AUDIENCE
+    assert "jti" in payload
+    assert len(payload["jti"]) >= 16
 
 
-def test_unauthenticated_access_rejected():
-    res = client.get("/interview/api/skills")
-    assert res.status_code == 401
+def test_unauthenticated_api_access_rejected():
+    endpoints = [
+        "/interview/api/skills",
+        "/interview/api/categories",
+        "/interview/api/resumes",
+        "/interview/api/sessions",
+        "/interview/api/system/status",
+        "/interview/api/system/models",
+    ]
+    for ep in endpoints:
+        res = client.get(ep)
+        assert res.status_code == 401, f"Endpoint {ep} did not reject unauthenticated access"
+        assert res.json()["authenticated"] is False
+
+
+def test_unauthenticated_static_and_root_redirect():
+    # Root index request without token should redirect to login
+    res_root = client.get("/interview/", follow_redirects=False)
+    assert res_root.status_code == 302
+    assert "/interview/login" in res_root.headers.get("location", "")
+
+    # Static assets direct request without token should redirect to login
+    res_static = client.get("/interview/static/index.html", follow_redirects=False)
+    assert res_static.status_code == 302
+    assert "/interview/login" in res_static.headers.get("location", "")
+
+    res_js = client.get("/interview/static/js/app.js", follow_redirects=False)
+    assert res_js.status_code == 302
+    assert "/interview/login" in res_js.headers.get("location", "")
+
+
+def test_security_headers_present():
+    res = client.get("/interview/login")
+    assert res.status_code == 200
+    headers = res.headers
+    assert headers.get("x-frame-options") == "DENY"
+    assert headers.get("x-content-type-options") == "nosniff"
+    assert headers.get("x-xss-protection") == "1; mode=block"
+    assert headers.get("referrer-policy") == "strict-origin-when-cross-origin"
+    assert "camera=()" in headers.get("permissions-policy", "")
+    assert "max-age=31536000" in headers.get("strict-transport-security", "")
+    assert "default-src" in headers.get("content-security-policy", "")
 
 
 def test_login_success():
@@ -36,11 +97,46 @@ def test_login_success():
     data = res.json()
     assert data["success"] is True
     assert "token" in data
+    # Check that Set-Cookie is set
+    assert "set-cookie" in res.headers
 
 
 def test_login_invalid_password():
     res = client.post("/interview/api/auth/login", json={"password": "invalid-password"})
     assert res.status_code == 401
+    assert "Incorrect password" in res.json()["detail"]
+
+
+def test_login_rate_limiting_brute_force_lockout():
+    attacker_ip = "198.51.100.99"
+    headers = {"X-Forwarded-For": attacker_ip}
+
+    # First 4 failed attempts should return 401
+    for attempt in range(4):
+        res = client.post(
+            "/interview/api/auth/login",
+            json={"password": f"bad_password_{attempt}"},
+            headers=headers,
+        )
+        assert res.status_code == 401, f"Attempt {attempt+1} should fail with 401"
+
+    # 5th failed attempt triggers lockout
+    res_5th = client.post(
+        "/interview/api/auth/login",
+        json={"password": "bad_password_5"},
+        headers=headers,
+    )
+    assert res_5th.status_code == 429
+    assert "Retry-After" in res_5th.headers
+    assert "locked" in res_5th.json()["detail"].lower()
+
+    # Subsequent attempts (even with correct password) are locked out
+    res_locked = client.post(
+        "/interview/api/auth/login",
+        json={"password": INTERVIEW_PASSWORD},
+        headers=headers,
+    )
+    assert res_locked.status_code == 429
 
 
 def test_skills_catalog_loading():
