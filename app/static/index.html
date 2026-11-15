@@ -1,0 +1,693 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full bg-slate-950 text-slate-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Interview Mentor AI — Tech Interview Platform</title>
+  
+  <!-- CSS & Fonts -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
+  
+  <!-- JS Libraries -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/marked/12.0.1/marked.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-java.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-go.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-sql.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-bash.min.js"></script>
+
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#eef2ff',
+              100: '#e0e7ff',
+              500: '#6366f1',
+              600: '#4f46e5',
+              700: '#4338ca',
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Custom scrollbars */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.6); }
+    ::-webkit-scrollbar-thumb { background: rgba(71, 85, 105, 0.6); border-radius: 9999px; }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(99, 102, 241, 0.8); }
+
+    /* Markdown Styling in Chat */
+    .prose-chat pre {
+      background: #0f172a !important;
+      border: 1px solid #1e293b;
+      border-radius: 0.75rem;
+      padding: 0.85rem;
+      margin: 0.6rem 0;
+      overflow-x: auto;
+    }
+    .prose-chat code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+      font-size: 0.86rem;
+      background: rgba(30, 41, 59, 0.6);
+      padding: 0.15rem 0.35rem;
+      border-radius: 0.25rem;
+    }
+    .prose-chat pre code {
+      background: transparent;
+      padding: 0;
+    }
+    .prose-chat p { margin-bottom: 0.65rem; }
+    .prose-chat p:last-child { margin-bottom: 0; }
+    .prose-chat ul, .prose-chat ol { margin-left: 1.25rem; margin-bottom: 0.65rem; list-style-type: disc; }
+    .prose-chat ol { list-style-type: decimal; }
+    .prose-chat li { margin-bottom: 0.25rem; }
+    .prose-chat blockquote {
+      border-left: 3px solid #6366f1;
+      padding-left: 0.75rem;
+      color: #94a3b8;
+      margin: 0.5rem 0;
+    }
+    .prose-chat h1, .prose-chat h2, .prose-chat h3 {
+      font-weight: 700;
+      color: #f8fafc;
+      margin-top: 0.75rem;
+      margin-bottom: 0.35rem;
+    }
+    .prose-chat h1 { font-size: 1.25rem; }
+    .prose-chat h2 { font-size: 1.1rem; }
+    .prose-chat h3 { font-size: 0.95rem; }
+    .prose-chat table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 0.75rem 0;
+      font-size: 0.85rem;
+    }
+    .prose-chat th, .prose-chat td {
+      border: 1px solid #334155;
+      padding: 0.4rem 0.6rem;
+    }
+    .prose-chat th {
+      background: #1e293b;
+      font-weight: 600;
+    }
+
+    /* Pulse animation */
+    @keyframes subtle-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .typing-cursor::after {
+      content: '▋';
+      display: inline-block;
+      color: #818cf8;
+      animation: subtle-pulse 0.8s infinite;
+      margin-left: 2px;
+    }
+  </style>
+</head>
+<body class="h-full flex flex-col bg-slate-950 text-slate-100 overflow-hidden font-sans antialiased">
+
+  <!-- Top Navigation Header -->
+  <header class="h-16 flex-shrink-0 bg-slate-900/90 border-b border-slate-800/80 backdrop-blur-md px-4 sm:px-6 flex items-center justify-between z-20">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-tr from-indigo-600 to-purple-600 flex items-center justify-center shadow-md shadow-indigo-600/30">
+        <i class="fa-solid fa-graduation-cap text-lg text-white"></i>
+      </div>
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="font-bold tracking-tight text-white sm:text-lg">The Interview Mentor</span>
+          <span class="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Ashish Suite</span>
+        </div>
+        <div class="text-[11px] text-slate-400 hidden sm:block">10 Production Resumes • 45 Specialized AI Mentors • Gemini Engine</div>
+      </div>
+    </div>
+
+    <!-- Mode Switcher Tabs (Resume Tracks vs Domain Skills) -->
+    <div class="flex items-center bg-slate-950/80 border border-slate-800 p-1 rounded-xl text-xs font-semibold">
+      <button id="view-mode-resumes" class="px-3 py-1.5 rounded-lg bg-indigo-600 text-white shadow-sm flex items-center gap-1.5 transition-all">
+        <i class="fa-solid fa-file-invoice text-indigo-200"></i>
+        <span>10 Resume Tracks</span>
+      </button>
+      <button id="view-mode-skills" class="px-3 py-1.5 rounded-lg text-slate-400 hover:text-white flex items-center gap-1.5 transition-all">
+        <i class="fa-solid fa-shapes text-slate-400"></i>
+        <span>45 General Skills</span>
+      </button>
+    </div>
+
+    <!-- Right Controls -->
+    <div class="flex items-center gap-2 sm:gap-3">
+      <!-- Model Selector -->
+      <div class="relative hidden sm:block">
+        <select id="model-select" class="bg-slate-800 border border-slate-700 text-xs rounded-lg px-2.5 py-1.5 text-slate-200 focus:outline-none focus:ring-1 focus:ring-indigo-500">
+          <option value="gemini-pro-latest">Gemini Pro (Deep Reasoning)</option>
+          <option value="gemini-flash-lite-latest">Gemini Flash Lite (Fast)</option>
+          <option value="gemini-3.1-pro-preview">Gemini 3.1 Pro (Preview)</option>
+        </select>
+      </div>
+
+      <!-- Settings / Key button -->
+      <button id="open-settings-btn" title="Gemini API Key Settings" class="p-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white border border-slate-700/80 transition-colors text-xs flex items-center gap-1.5">
+        <i class="fa-solid fa-key text-indigo-400"></i>
+        <span class="hidden md:inline">Gemini API</span>
+      </button>
+
+      <!-- Logout button -->
+      <button id="logout-btn" title="Logout" class="p-2 rounded-lg bg-slate-800/80 hover:bg-rose-950/40 text-slate-400 hover:text-rose-400 border border-slate-700/80 hover:border-rose-800/60 transition-colors text-xs flex items-center gap-1.5">
+        <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        <span class="hidden md:inline">Lock</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Main Container -->
+  <div class="flex-1 flex overflow-hidden relative">
+
+    <!-- Left Sidebar: Tracks, Skills & Past Sessions -->
+    <aside id="sidebar" class="w-72 flex-shrink-0 bg-slate-900/60 border-r border-slate-800/80 flex flex-col z-10 hidden md:flex transition-all">
+      <!-- Search Box -->
+      <div class="p-3 border-b border-slate-800/80">
+        <div class="relative">
+          <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-xs text-slate-500"></i>
+          <input 
+            type="text" 
+            id="skill-search" 
+            placeholder="Search tracks, roles, skills..." 
+            class="w-full bg-slate-950/80 border border-slate-800 rounded-lg pl-8 pr-3 py-1.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+          >
+        </div>
+      </div>
+
+      <!-- Navigation Tabs -->
+      <div class="flex border-b border-slate-800/80 px-3 pt-2 text-xs">
+        <button id="tab-nav-resumes" class="pb-2 px-2 font-medium border-b-2 border-indigo-500 text-white flex-1 text-center transition-colors">
+          <i class="fa-solid fa-id-card-clip mr-1"></i>Resumes
+        </button>
+        <button id="tab-nav-categories" class="pb-2 px-2 font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex-1 text-center transition-colors">
+          <i class="fa-solid fa-shapes mr-1"></i>Skills
+        </button>
+        <button id="tab-nav-history" class="pb-2 px-2 font-medium border-b-2 border-transparent text-slate-400 hover:text-slate-200 flex-1 text-center transition-colors">
+          <i class="fa-solid fa-clock-rotate-left mr-1"></i>History
+        </button>
+      </div>
+
+      <!-- Resume Track List Tab -->
+      <div id="resume-track-list-container" class="flex-1 overflow-y-auto p-2 space-y-1">
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-2 py-1 flex items-center justify-between">
+          <span>☕ Java Tracks (4)</span>
+          <span class="text-[10px] text-amber-400">Spring Boot 3</span>
+        </div>
+        <div id="java-tracks-sidebar" class="space-y-1 mb-3"></div>
+
+        <div class="text-[11px] font-bold uppercase tracking-wider text-slate-400 px-2 py-1 flex items-center justify-between">
+          <span>🐍 Python & AI Tracks (6)</span>
+          <span class="text-[10px] text-emerald-400">FastAPI & GenAI</span>
+        </div>
+        <div id="python-tracks-sidebar" class="space-y-1"></div>
+      </div>
+
+      <!-- Domain Category Filter List (Hidden by default) -->
+      <div id="category-list-container" class="flex-1 overflow-y-auto p-2 space-y-1 hidden">
+        <button data-cat="all" class="cat-filter-btn w-full text-left px-3 py-2 rounded-lg text-xs font-medium bg-indigo-600/20 text-indigo-300 border border-indigo-500/30 flex items-center justify-between">
+          <span><i class="fa-solid fa-layer-group mr-2 text-indigo-400"></i>All Domains</span>
+          <span id="all-count-badge" class="px-1.5 py-0.5 rounded bg-slate-800 text-[10px] text-slate-400">45</span>
+        </button>
+        <div id="dynamic-categories" class="space-y-1"></div>
+      </div>
+
+      <!-- Session History List (Hidden by default) -->
+      <div id="session-history-container" class="flex-1 overflow-y-auto p-2 space-y-1 hidden">
+        <div id="sessions-list" class="space-y-1.5"></div>
+      </div>
+
+      <!-- Sidebar Footer -->
+      <div class="p-3 border-t border-slate-800/80 text-[11px] text-slate-500 flex items-center justify-between">
+        <span class="truncate">Ashish Ranjan Cloud</span>
+        <span class="inline-flex items-center gap-1 text-emerald-400 font-medium">
+          <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span> Online
+        </span>
+      </div>
+    </aside>
+
+    <!-- Center Content Workspace -->
+    <main class="flex-1 flex flex-col overflow-hidden bg-slate-950 relative">
+
+      <!-- ================= VIEW 1A: RESUME TRACKS HUB (ASHISH PORTFOLIO) ================= -->
+      <div id="resumes-hub-view" class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8">
+        <!-- Hero Section -->
+        <div class="max-w-6xl mx-auto mb-8">
+          <div class="bg-gradient-to-r from-indigo-950/70 via-purple-950/50 to-slate-900 border border-indigo-500/30 rounded-2xl p-6 sm:p-8 relative overflow-hidden shadow-2xl">
+            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+              <div>
+                <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-500/10 text-emerald-400 border border-emerald-500/20 mb-2">
+                  <i class="fa-solid fa-circle-check text-[10px]"></i>
+                  <span>Candidate: Ashish Ranjan • 10 Production Verified Tracks</span>
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mb-2">Resume Mock Interview Studio</h2>
+                <p class="text-xs sm:text-sm text-slate-300 leading-relaxed max-w-2xl">
+                  Practice tailored technical screens and aggressive Bar Raiser grill rounds calibrated against your verified resumes.
+                  Test every metric: <strong>3,500 RPS</strong>, <strong>350 TPS</strong>, <strong>50% memory cuts</strong>, <strong>64% LLM cost savings</strong>, and <strong>1,111+ LeetCode problems</strong>.
+                </p>
+                <div class="mt-4 flex flex-wrap gap-2 text-xs">
+                  <span class="px-2.5 py-1 rounded-lg bg-slate-900/90 border border-slate-800 text-slate-300">
+                    <i class="fa-solid fa-graduation-cap text-indigo-400 mr-1.5"></i>Jadavpur Univ B.E. CSE (GPA 8.09)
+                  </span>
+                  <span class="px-2.5 py-1 rounded-lg bg-slate-900/90 border border-slate-800 text-slate-300">
+                    <i class="fa-solid fa-building text-amber-400 mr-1.5"></i>Airtel International & Dolcera
+                  </span>
+                  <span class="px-2.5 py-1 rounded-lg bg-slate-900/90 border border-slate-800 text-slate-300">
+                    <i class="fa-solid fa-trophy text-yellow-400 mr-1.5"></i>WBJEE Rank 1160 (99.2%ile)
+                  </span>
+                  <span class="px-2.5 py-1 rounded-lg bg-slate-900/90 border border-slate-800 text-slate-300">
+                    <i class="fa-solid fa-code text-cyan-400 mr-1.5"></i>LeetCode 1,111+ (Rating 1877)
+                  </span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter Sub-tabs: All (10) | Java (4) | Python (6) -->
+        <div class="max-w-6xl mx-auto flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+          <div class="flex items-center gap-2">
+            <button id="filter-resumes-all" class="resume-cat-filter px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-indigo-600 text-white shadow-sm">
+              All 10 Tracks (10)
+            </button>
+            <button id="filter-resumes-java" class="resume-cat-filter px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-slate-300 hover:text-white border border-slate-800">
+              ☕ Java Tracks (4)
+            </button>
+            <button id="filter-resumes-python" class="resume-cat-filter px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-slate-900 text-slate-300 hover:text-white border border-slate-800">
+              🐍 Python & AI Tracks (6)
+            </button>
+          </div>
+          <div class="text-xs text-slate-400">
+            Select a track to launch a <strong>Full Mock</strong>, <strong>Grill My Resume</strong>, or view the <strong>Question Bank</strong>.
+          </div>
+        </div>
+
+        <!-- Resume Tracks Grid -->
+        <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-5 pb-12" id="resume-tracks-grid">
+          <!-- Populated by JavaScript -->
+        </div>
+      </div>
+
+      <!-- ================= VIEW 1B: GENERAL SKILL CATALOG (45 SKILLS) ================= -->
+      <div id="catalog-view" class="flex-1 overflow-y-auto p-4 sm:p-6 lg:p-8 hidden">
+        <!-- Hero Section -->
+        <div class="max-w-6xl mx-auto mb-8">
+          <div class="bg-gradient-to-r from-indigo-900/40 via-purple-900/30 to-slate-900 border border-indigo-500/20 rounded-2xl p-6 sm:p-8 relative overflow-hidden shadow-xl">
+            <div class="max-w-2xl">
+              <span class="text-xs uppercase font-bold tracking-wider text-indigo-400">Production Technical Interview Practice</span>
+              <h2 class="text-2xl sm:text-3xl font-extrabold text-white mt-1 mb-2 tracking-tight">AI Coding & Architecture Mentor</h2>
+              <p class="text-sm text-slate-300 leading-relaxed mb-4">
+                Conduct end-to-end mock interviews with 45 battle-tested personas. Practice system design, distributed data, LeetCode algorithms, DevOps SRE, and behavioral leadership with progressive hints and hiring committee scorecards.
+              </p>
+              <div class="flex flex-wrap items-center gap-3 text-xs">
+                <span class="px-2.5 py-1 rounded-lg bg-slate-900/80 border border-slate-700 text-slate-300">
+                  <i class="fa-solid fa-bolt text-amber-400 mr-1.5"></i>Adaptive Hint Ladders (L1–L4)
+                </span>
+                <span class="px-2.5 py-1 rounded-lg bg-slate-900/80 border border-slate-700 text-slate-300">
+                  <i class="fa-solid fa-chart-simple text-emerald-400 mr-1.5"></i>Full Rubric Evaluation
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filter & Header -->
+        <div class="max-w-6xl mx-auto flex items-center justify-between mb-4">
+          <div class="flex items-center gap-2">
+            <h3 id="current-filter-title" class="text-lg font-bold text-white">All Interview Topics</h3>
+            <span id="filtered-count" class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 border border-slate-700">45 skills</span>
+          </div>
+        </div>
+
+        <!-- Skills Grid -->
+        <div class="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 pb-12" id="skills-grid">
+          <!-- Populated by JavaScript -->
+        </div>
+      </div>
+
+      <!-- ================= VIEW 2: INTERVIEW STUDIO ================= -->
+      <div id="interview-view" class="flex-1 flex flex-col overflow-hidden hidden">
+        <!-- Interview Room Header -->
+        <div class="h-14 flex-shrink-0 bg-slate-900/90 border-b border-slate-800 px-4 sm:px-6 flex items-center justify-between z-10">
+          <div class="flex items-center gap-3 min-w-0">
+            <button id="exit-interview-btn" title="Back to Hub" class="p-1.5 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
+              <i class="fa-solid fa-arrow-left"></i>
+            </button>
+            <div class="min-w-0">
+              <div class="flex items-center gap-2">
+                <h3 id="active-skill-title" class="text-sm sm:text-base font-bold text-white truncate">Microservices Architecture</h3>
+                <span id="active-skill-diff" class="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">Hard</span>
+              </div>
+              <div id="active-skill-role" class="text-[11px] text-slate-400 truncate">Target Role: Senior Engineer</div>
+            </div>
+          </div>
+
+          <!-- Phase & Quick Action Toolbar -->
+          <div class="flex items-center gap-2">
+            <!-- Phase Selector Dropdown -->
+            <div class="hidden sm:flex items-center gap-1.5 bg-slate-950/80 border border-slate-800 rounded-lg px-2.5 py-1 text-xs">
+              <span class="text-slate-500 font-medium">Phase:</span>
+              <select id="phase-select" class="bg-transparent text-indigo-400 font-semibold focus:outline-none cursor-pointer">
+                <option value="Phase 1: Warm-up & Clarification">Phase 1: Warm-up / Intro</option>
+                <option value="Phase 2: Core Architecture & Metrics">Phase 2: Core Design & Metrics</option>
+                <option value="Phase 3: Scaling & Deep Dive">Phase 3: Scaling / Deep Dive</option>
+                <option value="Phase 4: Wrap-up & Evaluation">Phase 4: Wrap-up & Code</option>
+              </select>
+            </div>
+
+            <!-- Hint Dropdown -->
+            <div class="relative inline-block text-left">
+              <button id="hint-dropdown-btn" class="px-2.5 py-1.5 rounded-lg bg-amber-500/10 hover:bg-amber-500/20 text-amber-400 border border-amber-500/30 text-xs font-medium flex items-center gap-1.5 transition-colors">
+                <i class="fa-regular fa-lightbulb"></i>
+                <span class="hidden sm:inline">Hint</span>
+                <i class="fa-solid fa-chevron-down text-[10px]"></i>
+              </button>
+              <div id="hint-menu" class="hidden absolute right-0 mt-2 w-56 rounded-xl bg-slate-900 border border-slate-800 shadow-xl py-1 z-30 text-xs">
+                <button data-hint-level="1" class="hint-option w-full text-left px-3 py-2 hover:bg-slate-800 text-slate-200 flex items-center gap-2">
+                  <span class="w-4 h-4 rounded bg-amber-500/20 text-amber-400 text-[10px] flex items-center justify-center font-bold">1</span>
+                  <span>Level 1: Nudge (High-Level)</span>
+                </button>
+                <button data-hint-level="2" class="hint-option w-full text-left px-3 py-2 hover:bg-slate-800 text-slate-200 flex items-center gap-2">
+                  <span class="w-4 h-4 rounded bg-amber-500/20 text-amber-400 text-[10px] flex items-center justify-center font-bold">2</span>
+                  <span>Level 2: Directional Pattern</span>
+                </button>
+                <button data-hint-level="3" class="hint-option w-full text-left px-3 py-2 hover:bg-slate-800 text-slate-200 flex items-center gap-2">
+                  <span class="w-4 h-4 rounded bg-amber-500/20 text-amber-400 text-[10px] flex items-center justify-center font-bold">3</span>
+                  <span>Level 3: Structural / Pseudocode</span>
+                </button>
+                <button data-hint-level="4" class="hint-option w-full text-left px-3 py-2 hover:bg-slate-800 text-slate-200 flex items-center gap-2">
+                  <span class="w-4 h-4 rounded bg-amber-500/20 text-amber-400 text-[10px] flex items-center justify-center font-bold">4</span>
+                  <span>Level 4: Code Solution Sketch</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Diagram Action -->
+            <button id="diagram-btn" title="Request Visual / ASCII Diagram" class="px-2.5 py-1.5 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400 border border-indigo-500/30 text-xs font-medium flex items-center gap-1.5 transition-colors">
+              <i class="fa-solid fa-diagram-project"></i>
+              <span class="hidden md:inline">ASCII Diagram</span>
+            </button>
+
+            <!-- Evaluate / Scorecard Button -->
+            <button id="evaluate-btn" class="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-semibold shadow-md shadow-emerald-600/20 flex items-center gap-1.5 transition-all cursor-pointer">
+              <i class="fa-solid fa-award"></i>
+              <span>Scorecard</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Studio Body: Split Screen (Chat + Scratchpad) -->
+        <div class="flex-1 flex overflow-hidden">
+          
+          <!-- Chat Panel (Left) -->
+          <div id="chat-panel" class="flex-1 flex flex-col bg-slate-950 overflow-hidden relative">
+            <!-- Messages Scroll Area -->
+            <div id="messages-container" class="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+              <!-- Dynamically populated with chat bubbles -->
+            </div>
+
+            <!-- Input Area -->
+            <div class="p-3 sm:p-4 bg-slate-900/90 border-t border-slate-800/80 backdrop-blur-md">
+              <form id="chat-form" class="flex flex-col gap-2">
+                <div class="relative flex items-center">
+                  <textarea 
+                    id="chat-input" 
+                    rows="2" 
+                    placeholder="Type your answer, explain your architecture, or ask questions... (Enter to send, Shift+Enter for newline)"
+                    class="w-full bg-slate-950 border border-slate-800 rounded-xl px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none pr-28"
+                  ></textarea>
+
+                  <div class="absolute right-2.5 bottom-2.5 flex items-center gap-1.5">
+                    <button 
+                      type="button" 
+                      id="insert-scratchpad-btn" 
+                      title="Insert scratchpad code into message" 
+                      class="p-2 rounded-lg text-slate-400 hover:text-indigo-400 hover:bg-slate-800 transition-colors text-xs"
+                    >
+                      <i class="fa-solid fa-code"></i>
+                    </button>
+                    <button 
+                      type="submit" 
+                      id="send-btn" 
+                      class="px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold flex items-center gap-1.5 shadow-md shadow-indigo-600/30 transition-all cursor-pointer"
+                    >
+                      <span>Send</span>
+                      <i class="fa-solid fa-paper-plane text-[10px]"></i>
+                    </button>
+                  </div>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- Scratchpad Toggle on Mobile / Collapse Button -->
+          <div class="hidden lg:flex flex-col border-l border-slate-800/80 w-96 xl:w-[480px] bg-slate-900/70 overflow-hidden" id="scratchpad-panel">
+            <!-- Scratchpad Header -->
+            <div class="h-10 flex-shrink-0 bg-slate-900 border-b border-slate-800 px-3 flex items-center justify-between text-xs">
+              <div class="flex items-center gap-2 text-slate-300 font-semibold">
+                <i class="fa-solid fa-terminal text-indigo-400"></i>
+                <span>Engineering Scratchpad</span>
+              </div>
+              <div class="flex items-center gap-2">
+                <select id="scratchpad-lang" class="bg-slate-950 border border-slate-800 rounded px-2 py-0.5 text-[11px] text-slate-300 focus:outline-none">
+                  <option value="python">Python</option>
+                  <option value="java">Java</option>
+                  <option value="sql">SQL</option>
+                  <option value="javascript">JavaScript / Node</option>
+                  <option value="typescript">TypeScript</option>
+                  <option value="markdown">Architecture Markdown</option>
+                </select>
+                <button id="send-scratchpad-direct-btn" class="px-2 py-0.5 rounded bg-indigo-600 hover:bg-indigo-500 text-white text-[11px] font-medium transition-colors cursor-pointer">
+                  Submit Code
+                </button>
+              </div>
+            </div>
+
+            <!-- Scratchpad Textarea -->
+            <div class="flex-1 flex flex-col p-2 bg-slate-950">
+              <textarea 
+                id="scratchpad-code" 
+                spellcheck="false"
+                placeholder="// Write your Java / Python solution, Kafka consumer, or SQL query here...&#10;&#10;public class Solution {&#10;    public void solve() {}&#10;}"
+                class="flex-1 w-full bg-slate-950 text-slate-200 font-mono text-xs p-3 rounded-lg border border-slate-800/80 focus:outline-none focus:ring-1 focus:ring-indigo-500 resize-none leading-relaxed"
+              ></textarea>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+    </main>
+  </div>
+
+  <!-- ================= MODAL: RESUME DETAILS & QUESTION BANK ================= -->
+  <div id="resume-details-modal" class="fixed inset-0 bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-3xl w-full max-h-[92vh] flex flex-col shadow-2xl overflow-hidden">
+      <!-- Modal Header -->
+      <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-900/90">
+        <div class="flex items-center gap-3">
+          <div id="resume-modal-icon" class="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-400 flex items-center justify-center text-lg font-bold">
+            J1
+          </div>
+          <div>
+            <h3 id="resume-modal-title" class="font-bold text-white text-base">Senior Java Backend & Distributed Systems Engineer</h3>
+            <p id="resume-modal-subtitle" class="text-xs text-slate-400">Fintech & High-Throughput Payment Banking</p>
+          </div>
+        </div>
+        <button id="close-resume-modal-btn" class="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+          <i class="fa-solid fa-xmark text-base"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="flex-1 overflow-y-auto p-6 space-y-6">
+        <!-- Target Roles & Tech Stack -->
+        <div>
+          <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Core Tech Stack</h4>
+          <div id="resume-modal-stack" class="flex flex-wrap gap-1.5"></div>
+        </div>
+
+        <!-- Key Metrics Claimed -->
+        <div>
+          <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Production Metrics & Architecture Claims</h4>
+          <div id="resume-modal-metrics" class="space-y-1.5 text-xs text-slate-200"></div>
+        </div>
+
+        <!-- Experience Bullets -->
+        <div>
+          <h4 class="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-2">Resume Experience Bullets</h4>
+          <ul id="resume-modal-bullets" class="space-y-2 text-xs text-slate-300 list-disc list-inside bg-slate-950 p-4 rounded-xl border border-slate-800/80"></ul>
+        </div>
+
+        <!-- Targeted Interview Question Bank -->
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <h4 class="text-xs font-bold text-indigo-400 uppercase tracking-wider flex items-center gap-1.5">
+              <i class="fa-solid fa-brain"></i> Bar Raiser Question Bank & Ideal Answers
+            </h4>
+            <span class="text-[11px] text-slate-500">Study before mock</span>
+          </div>
+          <div id="resume-modal-questions" class="space-y-3"></div>
+        </div>
+      </div>
+
+      <!-- Modal Footer (Action Launchers) -->
+      <div class="p-4 border-t border-slate-800 bg-slate-900/90 flex flex-wrap items-center justify-between gap-3">
+        <div class="text-xs text-slate-400">Launch Practice Mode:</div>
+        <div class="flex flex-wrap items-center gap-2">
+          <button id="modal-launch-grill" class="px-3 py-1.5 rounded-lg bg-rose-600 hover:bg-rose-500 text-white text-xs font-semibold shadow-md flex items-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-fire"></i>
+            <span>Grill My Resume</span>
+          </button>
+          <button id="modal-launch-full" class="px-3 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold shadow-md flex items-center gap-1.5 cursor-pointer">
+            <i class="fa-solid fa-play"></i>
+            <span>Full Mock Loop</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: SCORECARD & EVALUATION ================= -->
+  <div id="scorecard-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-2xl w-full max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+      <!-- Modal Header -->
+      <div class="p-5 border-b border-slate-800 flex items-center justify-between bg-slate-900/90">
+        <div class="flex items-center gap-3">
+          <div class="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg">
+            <i class="fa-solid fa-award"></i>
+          </div>
+          <div>
+            <h3 class="font-bold text-white text-base">Hiring Committee Evaluation</h3>
+            <p id="scorecard-skill-title" class="text-xs text-slate-400">Mock Interview Scorecard</p>
+          </div>
+        </div>
+        <button id="close-scorecard-btn" class="p-2 rounded-lg text-slate-400 hover:text-white hover:bg-slate-800">
+          <i class="fa-solid fa-xmark text-base"></i>
+        </button>
+      </div>
+
+      <!-- Modal Body -->
+      <div class="flex-1 overflow-y-auto p-6 space-y-6">
+        <!-- Score Banner -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 text-center flex flex-col items-center justify-center">
+            <span class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1">Overall Score</span>
+            <div class="text-4xl font-extrabold text-white flex items-baseline gap-1">
+              <span id="scorecard-score" class="text-emerald-400">85</span>
+              <span class="text-sm text-slate-500">/ 100</span>
+            </div>
+          </div>
+          <div class="p-4 rounded-xl bg-slate-950 border border-slate-800 text-center flex flex-col items-center justify-center">
+            <span class="text-xs text-slate-400 font-medium uppercase tracking-wider mb-1">Recommendation</span>
+            <div id="scorecard-recommendation" class="text-xl font-bold text-indigo-400">Strong Hire</div>
+          </div>
+        </div>
+
+        <!-- Executive Summary -->
+        <div>
+          <h4 class="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Executive Summary</h4>
+          <p id="scorecard-summary" class="text-xs sm:text-sm text-slate-300 bg-slate-950 p-4 rounded-xl border border-slate-800/80 leading-relaxed"></p>
+        </div>
+
+        <!-- Rubric Breakdown -->
+        <div>
+          <h4 class="text-xs font-semibold text-slate-300 uppercase tracking-wider mb-3">Rubric Breakdown</h4>
+          <div class="space-y-3" id="scorecard-rubric-container"></div>
+        </div>
+
+        <!-- Strengths & Growth Areas -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+          <div class="p-4 rounded-xl bg-emerald-950/20 border border-emerald-500/20">
+            <h5 class="font-bold text-emerald-400 mb-2 flex items-center gap-1.5">
+              <i class="fa-solid fa-circle-check"></i> Key Strengths
+            </h5>
+            <ul id="scorecard-strengths" class="space-y-1.5 text-slate-300 list-disc list-inside"></ul>
+          </div>
+          <div class="p-4 rounded-xl bg-amber-950/20 border border-amber-500/20">
+            <h5 class="font-bold text-amber-400 mb-2 flex items-center gap-1.5">
+              <i class="fa-solid fa-triangle-exclamation"></i> Growth Areas
+            </h5>
+            <ul id="scorecard-growth" class="space-y-1.5 text-slate-300 list-disc list-inside"></ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Modal Footer -->
+      <div class="p-4 border-t border-slate-800 bg-slate-900/90 flex justify-end gap-3">
+        <button id="close-scorecard-footer-btn" class="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-white transition-colors cursor-pointer">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ================= MODAL: GEMINI SETTINGS ================= -->
+  <div id="settings-modal" class="fixed inset-0 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-slate-900 border border-slate-800 rounded-2xl max-w-md w-full p-6 shadow-2xl space-y-5">
+      <div class="flex items-center justify-between border-b border-slate-800 pb-4">
+        <div class="flex items-center gap-2.5">
+          <i class="fa-solid fa-key text-indigo-400 text-lg"></i>
+          <h3 class="font-bold text-white text-base">Gemini API Configuration</h3>
+        </div>
+        <button id="close-settings-btn" class="p-1 rounded-lg text-slate-400 hover:text-white">
+          <i class="fa-solid fa-xmark text-base"></i>
+        </button>
+      </div>
+
+      <!-- Server Key Status -->
+      <div class="p-3.5 rounded-xl bg-slate-950 border border-slate-800 text-xs space-y-1.5">
+        <div class="flex items-center justify-between">
+          <span class="text-slate-400">Server Default Key:</span>
+          <span class="text-emerald-400 font-mono font-medium" id="server-key-status">Active (Configured)</span>
+        </div>
+        <div class="flex items-center justify-between">
+          <span class="text-slate-400">Backend Enforcement:</span>
+          <span class="text-indigo-400 font-semibold">Gemini API Only</span>
+        </div>
+      </div>
+
+      <!-- Custom Key Input -->
+      <div>
+        <label class="block text-xs font-semibold text-slate-300 uppercase tracking-wider mb-2">Personal Gemini API Key (Optional Override)</label>
+        <input 
+          type="password" 
+          id="custom-key-input" 
+          placeholder="Enter personal Gemini key..." 
+          class="w-full px-3.5 py-2.5 bg-slate-950 border border-slate-800 rounded-xl text-white text-xs font-mono placeholder-slate-600 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+        >
+        <p class="text-[11px] text-slate-500 mt-1.5">Leave blank to use the pre-configured server Gemini key.</p>
+      </div>
+
+      <!-- Key Test Result Banner -->
+      <div id="key-test-feedback" class="hidden p-3 rounded-xl text-xs flex items-center gap-2"></div>
+
+      <!-- Action Buttons -->
+      <div class="flex items-center justify-between pt-2">
+        <button id="test-key-btn" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer">
+          <i class="fa-solid fa-vial"></i> Test Key
+        </button>
+        <button id="save-settings-btn" class="px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-semibold transition-colors cursor-pointer">
+          Save Changes
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Embedded JS Application Logic -->
+  <script src="static/js/app.js"></script>
+</body>
+</html>
